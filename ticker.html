@@ -117,10 +117,15 @@
         
         async function fetchWithCorsFallback(url) {
             try {
-                const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                const corsResponse = await fetch('https://corsproxy.io/?' + url);
                 return await corsResponse.text();
             } catch (e) {
-                return null;
+                try {
+                    const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                    return await corsResponse.text();
+                } catch (e2) {
+                    return null;
+                }
             }
         }
         

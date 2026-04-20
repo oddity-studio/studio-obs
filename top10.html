@@ -86,9 +86,14 @@ async function loadRankings() {
   
   let text = null;
   try {
-    const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl));
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
     text = await corsResponse.text();
-  } catch (e) {}
+  } catch (e) {
+    try {
+      const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl));
+      text = await corsResponse.text();
+    } catch (e2) {}
+  }
   
   var top10 = [];
   
