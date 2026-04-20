@@ -67,7 +67,7 @@
 <body>
     <div class="ticker-container">
         <img class="ticker-image" src="resources/Ticker.png" alt="Ticker">
-        <div class="marquee-container" id="marquee-container">
+        <div class="marquee-container">
             <div class="marquee-inner" id="marquee-inner"></div>
         </div>
     </div>
@@ -80,13 +80,6 @@
             span.className = 'marquee-text';
             span.textContent = content;
             return span;
-        }
-        
-        function createSeparator() {
-            var sep = document.createElement('div');
-            sep.className = 'marquee-text';
-            sep.textContent = '/';
-            return sep;
         }
         
         function animate() {
@@ -115,95 +108,103 @@
                 var lastChild = container.lastElementChild;
                 var lastRight = parseFloat(lastChild.style.left || 0) + lastChild.offsetWidth;
                 
-                var sep = createSeparator();
-                sep.style.left = lastRight + 'px';
-                container.appendChild(sep);
-                newSpan.style.left = (lastRight + 20) + 'px';
+                newSpan.style.left = lastRight + 'px';
                 container.appendChild(newSpan);
             }
             
             requestAnimationFrame(animate);
         }
         
+        async function fetchWithCorsFallback(url) {
+            try {
+                const response = await fetch('/proxy/' + url);
+                return await response.text();
+            } catch (e) {
+                try {
+                    const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                    return await corsResponse.text();
+                } catch (e2) {
+                    return null;
+                }
+            }
+        }
+        
         async function loadTicker() {
             var container = document.getElementById('marquee-inner');
+            var space = '\u00A0\u00A0\u00A0';
             
-            try {
-                var response1 = await fetch('/proxy/https://www.audeobox.com/api/feeds/weekly-top-wins.xml');
-                var text1 = await response1.text();
-                console.log('RSS1:', text1.substring(0, 500));
+            var text1 = await fetchWithCorsFallback('https://www.audeobox.com/api/feeds/weekly-top-wins.xml');
+            var top3 = [];
+            if (text1) {
                 var parser1 = new DOMParser();
                 var xml1 = parser1.parseFromString(text1, 'text/xml');
                 var items1 = xml1.getElementsByTagName('item');
-                console.log('Items1 count:', items1.length);
-                var top3 = [];
                 for (var i = 0; i < Math.min(3, items1.length); i++) {
                     var title = items1[i].querySelector('title').textContent;
                     var formatted = title.replace(' — ', ' - ').toUpperCase();
                     top3.push(formatted);
                 }
-                console.log('Top3:', top3);
-                var space = '\u00A0\u00A0\u00A0';
-                var section1 = 'WELCOME TO AUDEOBOX';
-                var section2 = 'MOST WINS THIS WEEK: ' + top3.join(space);
-                
-                var response2 = await fetch('/proxy/https://www.audeobox.com/api/feeds/hottest-battles.xml');
-                var text2 = await response2.text();
-                console.log('RSS2:', text2.substring(0, 500));
+            }
+            var section1 = 'WELCOME TO AUDEOBOX';
+            var section2 = 'MOST WINS THIS WEEK: ' + top3.join(space);
+            
+            var text2 = await fetchWithCorsFallback('https://www.audeobox.com/api/feeds/hottest-battles.xml');
+            var hot3 = [];
+            if (text2) {
                 var parser2 = new DOMParser();
                 var xml2 = parser2.parseFromString(text2, 'text/xml');
                 var items2 = xml2.getElementsByTagName('item');
-                console.log('Items2 count:', items2.length);
-                var hot3 = [];
                 for (var j = 0; j < Math.min(3, items2.length); j++) {
                     var battleTitle = items2[j].querySelector('title').textContent;
                     hot3.push('#' + (j + 1) + ' - ' + battleTitle.toUpperCase());
                 }
-                console.log('Hot3:', hot3);
-                var section3 = 'HOTTEST BATTLES RIGHT NOW: ' + hot3.join(space);
-                
-                var response3 = await fetch('/proxy/https://www.audeobox.com/api/feeds/top-winstreak.xml');
-                var text3 = await response3.text();
+            }
+            var section3 = 'HOTTEST BATTLES RIGHT NOW: ' + hot3.join(space);
+            
+            var text3 = await fetchWithCorsFallback('https://www.audeobox.com/api/feeds/top-winstreak.xml');
+            var section4 = '';
+            if (text3) {
                 var parser3 = new DOMParser();
                 var xml3 = parser3.parseFromString(text3, 'text/xml');
                 var items3 = xml3.getElementsByTagName('item');
-                var streakTitle = items3[0].querySelector('title').textContent;
-                var streakFormatted = streakTitle.replace('#1 — ', '').replace(' — ', ' - ').replace(' consecutive wins', ' CONSECUTIVE WINS').toUpperCase();
-                var section4 = 'HIGHEST KILLSTREAK - ' + streakFormatted;
-                
-                var response4 = await fetch('/proxy/https://www.audeobox.com/api/feeds/latest-battles.xml');
-                var text4 = await response4.text();
+                if (items3.length > 0) {
+                    var streakTitle = items3[0].querySelector('title').textContent;
+                    var streakFormatted = streakTitle.replace('#1 — ', '').replace(' — ', ' - ').replace(' consecutive wins', ' CONSECUTIVE WINS').toUpperCase();
+                    section4 = 'HIGHEST KILLSTREAK - ' + streakFormatted;
+                }
+            }
+            
+            var text4 = await fetchWithCorsFallback('https://www.audeobox.com/api/feeds/latest-battles.xml');
+            var recent3 = [];
+            if (text4) {
                 var parser4 = new DOMParser();
                 var xml4 = parser4.parseFromString(text4, 'text/xml');
                 var items4 = xml4.getElementsByTagName('item');
-                var recent3 = [];
                 for (var k = 0; k < Math.min(3, items4.length); k++) {
                     var recentTitle = items4[k].querySelector('title').textContent;
                     recent3.push('#' + (k + 1) + ' - ' + recentTitle.toUpperCase());
                 }
-                var section5 = 'MOST RECENT BATTLES: ' + recent3.join(space);
-                
-                var response5 = await fetch('/proxy/https://www.audeobox.com/api/feeds/newest-users.xml');
-                var text5 = await response5.text();
+            }
+            var section5 = 'MOST RECENT BATTLES: ' + recent3.join(space);
+            
+            var text5 = await fetchWithCorsFallback('https://www.audeobox.com/api/feeds/newest-users.xml');
+            var section6 = '';
+            if (text5) {
                 var parser5 = new DOMParser();
                 var xml5 = parser5.parseFromString(text5, 'text/xml');
                 var items5 = xml5.getElementsByTagName('item');
-                var newestTitle = items5[0].querySelector('title').textContent;
-                var newestName = newestTitle.split(' — ')[0].replace('Welcome ', '').trim();
-                var newestFormatted = newestName + ' JUST JOINED';
-                var section6 = newestFormatted;
-                
-                tickerContent = section1 + '  /  ' + section2 + '  /  ' + section3 + '  /  ' + section4 + '  /  ' + section5 + '  /  ' + section6;
-            } catch (e) {
-                tickerContent = 'WELCOME TO AUDEOBOX  /  MOST WINS THIS WEEK: #1 - PRODGRIZZLY (7 WINS)   #2 - SIK TRAKZ (5 WINS)   #3 - TOTALLY NOT FRUITY (3 WINS)  /  HOTTEST BATTLES RIGHT NOW: #1 - SYDOSYS VS DEPHNIK   #2 - JPA9 VS SAYY   #3 - SYDOSYS VS ESPIN  /  HIGHEST KILLSTREAK - HI I\'M ARI (129 CONSECUTIVE WINS)  /  MOST RECENT BATTLES: #1 - SWAGGDOTBIZ VS BRYCKZ   #2 - JSTARR VS HI I\'M ARI   #3 - BRYCKZ VS SWAGGDOTBIZ  /  ALKMY JUST JOINED';
+                if (items5.length > 0) {
+                    var newestTitle = items5[0].querySelector('title').textContent;
+                    var newestName = newestTitle.split(' — ')[0].replace('Welcome ', '').trim();
+                    section6 = newestName + ' JUST JOINED';
+                }
             }
+            
+            tickerContent = section1 + '  /  ' + section2 + '  /  ' + section3 + '  /  ' + section4 + '  /  ' + section5 + '  /  ' + section6;
             
             for (var k = 0; k < 3; k++) {
                 var span = createTextSpan(tickerContent);
                 container.appendChild(span);
-                if (k < 2) {
-                    container.appendChild(createSeparator());
-                }
             }
             
             setTimeout(function() {
