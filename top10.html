@@ -77,12 +77,18 @@ html, body {
 async function loadRankings() {
   const container = document.getElementById("rankings");
   const apiUrl = 'https://www.audeobox.com/api/feeds/top-producers.xml';
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
   let text = null;
-  try {
-    const response = await fetch('/proxy/' + apiUrl);
-    text = await response.text();
-  } catch (e) {
+  
+  if (isLocal) {
+    try {
+      const response = await fetch('/proxy/' + apiUrl);
+      text = await response.text();
+    } catch (e) {}
+  }
+  
+  if (!text) {
     try {
       const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl));
       text = await corsResponse.text();

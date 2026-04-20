@@ -116,16 +116,20 @@
         }
         
         async function fetchWithCorsFallback(url) {
-            try {
-                const response = await fetch('/proxy/' + url);
-                return await response.text();
-            } catch (e) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (isLocal) {
                 try {
-                    const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
-                    return await corsResponse.text();
-                } catch (e2) {
-                    return null;
-                }
+                    const response = await fetch('/proxy/' + url);
+                    return await response.text();
+                } catch (e) {}
+            }
+            
+            try {
+                const corsResponse = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                return await corsResponse.text();
+            } catch (e2) {
+                return null;
             }
         }
         
