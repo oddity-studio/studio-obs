@@ -25,10 +25,21 @@ html, body {
   transform: translate(-50%, -50%);
   min-width: 260px;
   padding: 28px 36px;
-  background: rgba(0,0,0,0.98);
+  background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+  border: 2px solid #d4af37;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+#rankings::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
 }
 
 #rankings h1 {
@@ -36,11 +47,12 @@ html, body {
   font-size: 20px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.85;
   text-align: center;
   font-family: 'Exo 2', sans-serif;
   font-style: italic;
   font-weight: 900;
+  color: #d4af37;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .rank {
@@ -57,14 +69,16 @@ html, body {
 .rank span {
   min-width: 26px;
   text-align: right;
-  opacity: 0.5;
+  color: #d4af37;
   font-style: italic;
   font-weight: 900;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 .rank .name {
   font-style: normal;
   font-weight: 400;
+  color: #e8e8e8;
 }
 
 @keyframes fadeIn {
