@@ -95,6 +95,7 @@ function showArrival(username) {
 }
 
 async function checkForNewUser() {
+  console.log('Checking for new user...');
   try {
     const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
     const text = await corsResponse.text();
@@ -109,9 +110,16 @@ async function checkForNewUser() {
         var username = title.split(' — ')[0].replace('Welcome ', '').trim();
         
         if (username !== currentUsername) {
+          console.log('New user detected:', username, '- triggering re-render');
           currentUsername = username;
           showArrival(username);
         }
+      }
+    }
+  } catch (e) {}
+  
+  setTimeout(checkForNewUser, 5000);
+}
       }
     }
   } catch (e) {}
@@ -120,6 +128,7 @@ async function checkForNewUser() {
 }
 
 async function loadNewestUser() {
+  console.log('Initial load: checking for newest user...');
   try {
     const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
     const text = await corsResponse.text();

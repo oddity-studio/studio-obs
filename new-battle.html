@@ -96,6 +96,7 @@ function showBattle(battleName) {
 }
 
 async function checkForNewBattle() {
+  console.log('Checking for new battle...');
   try {
     const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
     const text = await corsResponse.text();
@@ -109,6 +110,7 @@ async function checkForNewBattle() {
         var title = items[0].querySelector('title').textContent;
         
         if (title !== currentBattle) {
+          console.log('New battle detected:', title, '- triggering re-render');
           currentBattle = title;
           showBattle(title);
         }
@@ -120,6 +122,7 @@ async function checkForNewBattle() {
 }
 
 async function loadNewestBattle() {
+  console.log('Initial load: checking for newest battle...');
   try {
     const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
     const text = await corsResponse.text();
