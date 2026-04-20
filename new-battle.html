@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>New Battle - OBS Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital 1,wght@1,900&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Exo 2', sans-serif;
+  color: white;
+}
+
+#battle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 28px 48px;
+  background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+  border: 2px solid #d4af37;
+  border-radius: 24px;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+#battle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+}
+
+.battle-title {
+  font-size: 42px;
+  font-style: italic;
+  font-weight: 900;
+  color: #d4af37;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 24px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e8e8e8;
+  opacity: 0.8;
+}
+
+.loading {
+  font-size: 32px;
+  color: #d4af37;
+  font-style: italic;
+  font-weight: 900;
+}
+</style>
+</head>
+
+<body>
+
+<div id="battle">
+  <div class="loading">LOADING...</div>
+</div>
+
+<script>
+let currentBattle = '';
+let fadeTimeout = null;
+const apiUrl = 'https://www.audeobox.com/api/feeds/newest-battles.xml';
+
+function showBattle(battleName) {
+  const container = document.getElementById("battle");
+  container.innerHTML = `
+    <div class="battle-title">${battleName}</div>
+    <div class="subtitle">NEW BATTLE JUST DROPPED</div>
+  `;
+  container.style.opacity = '1';
+  
+  if (fadeTimeout) clearTimeout(fadeTimeout);
+  fadeTimeout = setTimeout(() => {
+    container.style.opacity = '0';
+  }, 5000);
+}
+
+async function checkForNewBattle() {
+  try {
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
+    const text = await corsResponse.text();
+    
+    if (text) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.getElementsByTagName('item');
+      
+      if (items.length > 0) {
+        var title = items[0].querySelector('title').textContent;
+        
+        if (title !== currentBattle) {
+          currentBattle = title;
+          showBattle(title);
+        }
+      }
+    }
+  } catch (e) {}
+  
+  setTimeout(checkForNewBattle, 5000);
+}
+
+async function loadNewestBattle() {
+  try {
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
+    const text = await corsResponse.text();
+    
+    if (text) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.getElementsByTagName('item');
+      
+      if (items.length > 0) {
+        var title = items[0].querySelector('title').textContent;
+        currentBattle = title;
+        
+        showBattle(title);
+        setTimeout(checkForNewBattle, 5000);
+        return;
+      }
+    }
+  } catch (e) {}
+  
+  currentBattle = fallback;
+  showBattle(fallback);
+  setTimeout(checkForNewBattle, 5000);
+}
+
+const fallback = "Producer vs User #0";
+
+loadNewestBattle();
+</script>
+
+</body>
+</html>
