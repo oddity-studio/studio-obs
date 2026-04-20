@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticker Overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital 1,wght@1,900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: transparent;
+            overflow: hidden;
+        }
+        .ticker-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 1920px;
+            height: 1080px;
+        }
+        .ticker-image {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 1920px;
+            height: auto;
+            z-index: 1;
+        }
+        .marquee-container {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 1920px;
+            height: 40px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .marquee-inner {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 40px;
+            width: 1920px;
+            white-space: nowrap;
+            -webkit-clip-path: inset(0 0 0 320px);
+            clip-path: inset(0 0 0 320px);
+        }
+        .marquee-text {
+            position: absolute;
+            display: inline-block;
+            font-family: 'Exo 2', sans-serif;
+            font-style: italic;
+            font-weight: bold;
+            font-size: 30px;
+            color: #cccccc;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticker-container">
+        <img class="ticker-image" src="resources/Ticker.png" alt="Ticker">
+        <div class="marquee-container" id="marquee-container">
+            <div class="marquee-inner" id="marquee-inner"></div>
+        </div>
+    </div>
+    <script>
+        var speed = 2;
+        var tickerContent = '';
+        
+        function createTextSpan(content) {
+            var span = document.createElement('div');
+            span.className = 'marquee-text';
+            span.textContent = content;
+            return span;
+        }
+        
+        function createSeparator() {
+            var sep = document.createElement('div');
+            sep.className = 'marquee-text';
+            sep.textContent = '/';
+            return sep;
+        }
+        
+        function animate() {
+            var container = document.getElementById('marquee-inner');
+            var children = container.children;
+            
+            if (children.length === 0) {
+                requestAnimationFrame(animate);
+                return;
+            }
+            
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                var currentLeft = parseFloat(child.style.left) || 0;
+                child.style.left = (currentLeft - speed) + 'px';
+            }
+            
+            var firstChild = container.firstElementChild;
+            var firstWidth = firstChild.offsetWidth;
+            var firstLeft = parseFloat(firstChild.style.left) || 0;
+            
+            if (firstLeft + firstWidth < 320) {
+                container.removeChild(firstChild);
+                
+                var newSpan = createTextSpan(tickerContent);
+                var lastChild = container.lastElementChild;
+                var lastRight = parseFloat(lastChild.style.left || 0) + lastChild.offsetWidth;
+                
+                var sep = createSeparator();
+                sep.style.left = lastRight + 'px';
+                container.appendChild(sep);
+                newSpan.style.left = (lastRight + 20) + 'px';
+                container.appendChild(newSpan);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        async function loadTicker() {
+            var container = document.getElementById('marquee-inner');
+            
+            try {
+                var response1 = await fetch('/proxy/https://www.audeobox.com/api/feeds/weekly-top-wins.xml');
+                var text1 = await response1.text();
+                console.log('RSS1:', text1.substring(0, 500));
+                var parser1 = new DOMParser();
+                var xml1 = parser1.parseFromString(text1, 'text/xml');
+                var items1 = xml1.getElementsByTagName('item');
+                console.log('Items1 count:', items1.length);
+                var top3 = [];
+                for (var i = 0; i < Math.min(3, items1.length); i++) {
+                    var title = items1[i].querySelector('title').textContent;
+                    var formatted = title.replace(' — ', ' - ').toUpperCase();
+                    top3.push(formatted);
+                }
+                console.log('Top3:', top3);
+                var space = '\u00A0\u00A0\u00A0';
+                var section1 = 'WELCOME TO AUDEOBOX';
+                var section2 = 'MOST WINS THIS WEEK: ' + top3.join(space);
+                
+                var response2 = await fetch('/proxy/https://www.audeobox.com/api/feeds/hottest-battles.xml');
+                var text2 = await response2.text();
+                console.log('RSS2:', text2.substring(0, 500));
+                var parser2 = new DOMParser();
+                var xml2 = parser2.parseFromString(text2, 'text/xml');
+                var items2 = xml2.getElementsByTagName('item');
+                console.log('Items2 count:', items2.length);
+                var hot3 = [];
+                for (var j = 0; j < Math.min(3, items2.length); j++) {
+                    var battleTitle = items2[j].querySelector('title').textContent;
+                    hot3.push('#' + (j + 1) + ' - ' + battleTitle.toUpperCase());
+                }
+                console.log('Hot3:', hot3);
+                var section3 = 'HOTTEST BATTLES RIGHT NOW: ' + hot3.join(space);
+                
+                var response3 = await fetch('/proxy/https://www.audeobox.com/api/feeds/top-winstreak.xml');
+                var text3 = await response3.text();
+                var parser3 = new DOMParser();
+                var xml3 = parser3.parseFromString(text3, 'text/xml');
+                var items3 = xml3.getElementsByTagName('item');
+                var streakTitle = items3[0].querySelector('title').textContent;
+                var streakFormatted = streakTitle.replace('#1 — ', '').replace(' — ', ' - ').replace(' consecutive wins', ' CONSECUTIVE WINS').toUpperCase();
+                var section4 = 'HIGHEST KILLSTREAK - ' + streakFormatted;
+                
+                var response4 = await fetch('/proxy/https://www.audeobox.com/api/feeds/latest-battles.xml');
+                var text4 = await response4.text();
+                var parser4 = new DOMParser();
+                var xml4 = parser4.parseFromString(text4, 'text/xml');
+                var items4 = xml4.getElementsByTagName('item');
+                var recent3 = [];
+                for (var k = 0; k < Math.min(3, items4.length); k++) {
+                    var recentTitle = items4[k].querySelector('title').textContent;
+                    recent3.push('#' + (k + 1) + ' - ' + recentTitle.toUpperCase());
+                }
+                var section5 = 'MOST RECENT BATTLES: ' + recent3.join(space);
+                
+                var response5 = await fetch('/proxy/https://www.audeobox.com/api/feeds/newest-users.xml');
+                var text5 = await response5.text();
+                var parser5 = new DOMParser();
+                var xml5 = parser5.parseFromString(text5, 'text/xml');
+                var items5 = xml5.getElementsByTagName('item');
+                var newestTitle = items5[0].querySelector('title').textContent;
+                var newestName = newestTitle.split(' — ')[0].replace('Welcome ', '').trim();
+                var newestFormatted = newestName + ' JUST JOINED';
+                var section6 = newestFormatted;
+                
+                tickerContent = section1 + '  /  ' + section2 + '  /  ' + section3 + '  /  ' + section4 + '  /  ' + section5 + '  /  ' + section6;
+            } catch (e) {
+                tickerContent = 'WELCOME TO AUDEOBOX  /  MOST WINS THIS WEEK: #1 - PRODGRIZZLY (7 WINS)   #2 - SIK TRAKZ (5 WINS)   #3 - TOTALLY NOT FRUITY (3 WINS)  /  HOTTEST BATTLES RIGHT NOW: #1 - SYDOSYS VS DEPHNIK   #2 - JPA9 VS SAYY   #3 - SYDOSYS VS ESPIN  /  HIGHEST KILLSTREAK - HI I\'M ARI (129 CONSECUTIVE WINS)  /  MOST RECENT BATTLES: #1 - SWAGGDOTBIZ VS BRYCKZ   #2 - JSTARR VS HI I\'M ARI   #3 - BRYCKZ VS SWAGGDOTBIZ  /  ALKMY JUST JOINED';
+            }
+            
+            for (var k = 0; k < 3; k++) {
+                var span = createTextSpan(tickerContent);
+                container.appendChild(span);
+                if (k < 2) {
+                    container.appendChild(createSeparator());
+                }
+            }
+            
+            setTimeout(function() {
+                var children = container.children;
+                var runningLeft = 320;
+                for (var m = 0; m < children.length; m++) {
+                    children[m].style.left = runningLeft + 'px';
+                    runningLeft += children[m].offsetWidth;
+                }
+                requestAnimationFrame(animate);
+            }, 50);
+        }
+        
+        loadTicker();
+    </script>
+</body>
+</html>
