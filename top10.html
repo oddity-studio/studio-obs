@@ -79,7 +79,7 @@ async function loadRankings() {
   const container = document.getElementById("rankings");
   
   try {
-    const response = await fetch('/proxy/https://www.audeobox.com/api/feeds/weekly-top-wins.xml');
+    const response = await fetch('/proxy/https://www.audeobox.com/api/feeds/top-producers.xml');
     const text = await response.text();
     const parser = new DOMParser();
     const xml = parser.parseFromString(text, 'text/xml');
@@ -88,7 +88,7 @@ async function loadRankings() {
     
     for (var i = 0; i < Math.min(10, items.length); i++) {
       var title = items[i].querySelector('title').textContent;
-      var name = title.replace('#' + (i + 1) + ' — ', '').replace(' (', ' (').replace(' wins)', '').trim();
+      var name = title.replace('#' + (i + 1) + ' — ', '').trim();
       top10.push(name);
     }
     
