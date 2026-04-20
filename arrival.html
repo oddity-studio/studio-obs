@@ -91,7 +91,7 @@ function showArrival(username) {
   if (fadeTimeout) clearTimeout(fadeTimeout);
   fadeTimeout = setTimeout(() => {
     container.style.opacity = '0';
-  }, 30000);
+  }, 5000);
 }
 
 async function checkForNewUser() {
@@ -135,7 +135,7 @@ async function loadNewestUser() {
         currentUsername = username;
         
         showArrival(username);
-        setTimeout(checkForNewUser, 30000);
+setTimeout(checkForNewUser, 5000);
         return;
       }
     }
