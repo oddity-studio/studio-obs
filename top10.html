@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OBS Rankings Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital 1,wght@1,900&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Exo 2', sans-serif;
+  color: white;
+}
+
+#rankings {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 260px;
+  padding: 28px 36px;
+
+  background: rgba(0,0,0,0.98);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#rankings h1 {
+  margin: 0 0 18px;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  text-align: center;
+  font-family: 'Exo 2', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.rank {
+  display: flex;
+  gap: 14px;
+  font-size: 22px;
+  line-height: 1.5;
+  opacity: 0;
+  animation: fadeIn 0.35s ease forwards;
+  font-family: 'Exo 2', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.rank span {
+  min-width: 26px;
+  text-align: right;
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="rankings">
+  <h1>Battle Rankings</h1>
+</div>
+
+<script>
+async function loadRankings() {
+  const container = document.getElementById("rankings");
+  
+  try {
+    const response = await fetch('/proxy/https://www.audeobox.com/api/feeds/weekly-top-wins.xml');
+    const text = await response.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    const items = xml.getElementsByTagName('item');
+    const top10 = [];
+    
+    for (var i = 0; i < Math.min(10, items.length); i++) {
+      var title = items[i].querySelector('title').textContent;
+      var name = title.replace('#' + (i + 1) + ' — ', '').replace(' (', ' (').replace(' wins)', '').trim();
+      top10.push(name);
+    }
+    
+    top10.forEach((name, i) => {
+      const row = document.createElement("div");
+      row.className = "rank";
+      row.style.animationDelay = `${i * 0.08}s`;
+      row.innerHTML = `<span>${i + 1}</span><div>${name}</div>`;
+      container.appendChild(row);
+    });
+  } catch (e) {
+    const fallback = [
+      "Producer One",
+      "BeatGhetto",
+      "808 Wizard",
+      "Sample Sniper",
+      "Bass Monk",
+      "Drum Cult",
+      "Loop Dealer",
+      "Midnight FX",
+      "Razor Keys",
+      "LowEnd Prophet"
+    ];
+    
+    fallback.forEach((name, i) => {
+      const row = document.createElement("div");
+      row.className = "rank";
+      row.style.animationDelay = `${i * 0.08}s`;
+      row.innerHTML = `<span>${i + 1}</span><div>${name}</div>`;
+      container.appendChild(row);
+    });
+  }
+}
+
+loadRankings();
+</script>
+
+</body>
+</html>
