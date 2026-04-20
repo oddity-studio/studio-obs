@@ -82,9 +82,10 @@ const apiUrl = 'https://www.audeobox.com/api/feeds/newest-battles.xml';
 
 function showBattle(battleName) {
   const container = document.getElementById("battle");
+  var username = battleName.split(' vs ')[0];
   container.innerHTML = `
-    <div class="battle-title">${battleName}</div>
-    <div class="subtitle">NEW BATTLE JUST DROPPED</div>
+    <div class="battle-title">${username}</div>
+    <div class="subtitle">JUST DROPPED A NEW BATTLE</div>
   `;
   container.style.opacity = '1';
   
