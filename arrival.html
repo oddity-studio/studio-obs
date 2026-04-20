@@ -74,9 +74,11 @@ html, body {
 </div>
 
 <script>
-async function loadNewestUser() {
+let currentUsername = '';
+const apiUrl = 'https://www.audeobox.com/api/feeds/newest-users.xml';
+
+async function checkForNewUser() {
   const container = document.getElementById("arrival");
-  const apiUrl = 'https://www.audeobox.com/api/feeds/newest-users.xml';
   
   try {
     const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
@@ -91,20 +93,55 @@ async function loadNewestUser() {
         var title = items[0].querySelector('title').textContent;
         var username = title.split(' — ')[0].replace('Welcome ', '').trim();
         
+        if (username !== currentUsername) {
+          currentUsername = username;
+          container.innerHTML = `
+            <div class="joined">${username} just joined</div>
+            <div class="welcome">WELCOME TO AUDEOBOX</div>
+          `;
+        }
+      }
+    }
+  } catch (e) {}
+  
+  setTimeout(checkForNewUser, 30000);
+}
+
+async function loadNewestUser() {
+  const container = document.getElementById("arrival");
+  
+  try {
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
+    const text = await corsResponse.text();
+    
+    if (text) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.getElementsByTagName('item');
+      
+      if (items.length > 0) {
+        var title = items[0].querySelector('title').textContent;
+        var username = title.split(' — ')[0].replace('Welcome ', '').trim();
+        currentUsername = username;
+        
         container.innerHTML = `
           <div class="joined">${username} just joined</div>
           <div class="welcome">WELCOME TO AUDEOBOX</div>
         `;
+        
+        setTimeout(checkForNewUser, 30000);
         return;
       }
     }
   } catch (e) {}
   
-  // Fallback
+  currentUsername = fallback;
   container.innerHTML = `
     <div class="joined">${fallback} just joined</div>
     <div class="welcome">WELCOME TO AUDEOBOX</div>
   `;
+  
+  setTimeout(checkForNewUser, 30000);
 }
 
 const fallback = "New Producer";
