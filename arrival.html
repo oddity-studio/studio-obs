@@ -45,9 +45,34 @@ html, body {
   border-radius: 24px;
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
   text-align: center;
-  opacity: 1;
-  transition: opacity 1s ease;
+  opacity: 0;
   z-index: 1000;
+}
+
+#arrival.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#arrival.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+#video-overlay.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#video-overlay.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 #arrival::before {
@@ -67,6 +92,23 @@ html, body {
   color: #d4af37;
   text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
   margin-bottom: 8px;
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+.joined.slide-in {
+  animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .welcome {
@@ -75,6 +117,22 @@ html, body {
   text-transform: uppercase;
   color: #e8e8e8;
   opacity: 0.8;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.welcome span {
+  display: inline-block;
+  opacity: 0;
+}
+
+.welcome.typing span {
+  animation: typeIn 0.05s ease forwards;
+}
+
+@keyframes typeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .loading {
@@ -99,6 +157,7 @@ html, body {
 <script>
 let currentUsername = '';
 let fadeTimeout = null;
+let typingTimeout = null;
 const apiUrl = 'https://www.audeobox.com/api/feeds/newest-users.xml';
 
 function playVideo() {
@@ -107,22 +166,57 @@ function playVideo() {
   video.play();
 }
 
+function typeWriter(element, text, callback) {
+  if (typingTimeout) clearTimeout(typingTimeout);
+  element.innerHTML = '';
+  let i = 0;
+  const chars = text.split('');
+  
+  function type() {
+    if (i < chars.length) {
+      element.innerHTML += '<span>' + chars[i] + '</span>';
+      i++;
+      typingTimeout = setTimeout(type, 30);
+    } else if (callback) {
+      callback();
+    }
+  }
+  type();
+}
+
 function showArrival(username) {
   const container = document.getElementById("arrival");
   const videoOverlay = document.getElementById("video-overlay");
+  
+  container.classList.remove('fade-out');
+  videoOverlay.classList.remove('fade-out');
+  container.classList.add('show');
+  videoOverlay.classList.add('show');
+  
   container.innerHTML = `
     <div class="joined">${username} just joined</div>
-    <div class="welcome">WELCOME TO AUDEOBOX</div>
+    <div class="welcome"><span></span></div>
   `;
-  container.style.opacity = '1';
-  videoOverlay.style.opacity = '1';
   
   playVideo();
   
+  setTimeout(() => {
+    const joinedEl = container.querySelector('.joined');
+    joinedEl.classList.add('slide-in');
+    
+    setTimeout(() => {
+      const welcomeEl = container.querySelector('.welcome');
+      welcomeEl.classList.add('typing');
+      typeWriter(welcomeEl, 'WELCOME TO AUDEOBOX');
+    }, 200);
+  }, 300);
+  
   if (fadeTimeout) clearTimeout(fadeTimeout);
   fadeTimeout = setTimeout(() => {
-    container.style.opacity = '0';
-    videoOverlay.style.opacity = '0';
+    container.classList.add('fade-out');
+    container.classList.remove('show');
+    videoOverlay.classList.add('fade-out');
+    videoOverlay.classList.remove('show');
   }, 5000);
 }
 
