@@ -30,6 +30,12 @@ html, body {
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+#rankings.fade-out {
+  opacity: 0;
 }
 
 #rankings::before {
@@ -126,6 +132,10 @@ async function loadRankings() {
   }
   
   renderList(top10);
+  
+  setTimeout(() => {
+    container.classList.add('fade-out');
+  }, 20000);
   
   function renderList(list) {
     list.forEach((name, i) => {
