@@ -170,11 +170,11 @@ function typeWriter(element, text, callback) {
   if (typingTimeout) clearTimeout(typingTimeout);
   element.innerHTML = '';
   let i = 0;
-  const chars = text.split('');
   
   function type() {
-    if (i < chars.length) {
-      element.innerHTML += '<span>' + chars[i] + '</span>';
+    if (i < text.length) {
+      const char = text[i] === ' ' ? '&nbsp;' : text[i];
+      element.innerHTML += '<span>' + char + '</span>';
       i++;
       typingTimeout = setTimeout(type, 30);
     } else if (callback) {
