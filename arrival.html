@@ -18,6 +18,22 @@ html, body {
   color: white;
 }
 
+#video-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+#video-overlay video {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
 #arrival {
   position: absolute;
   top: 50%;
@@ -31,6 +47,7 @@ html, body {
   text-align: center;
   opacity: 1;
   transition: opacity 1s ease;
+  z-index: 1001;
 }
 
 #arrival::before {
@@ -71,6 +88,10 @@ html, body {
 
 <body>
 
+<div id="video-overlay">
+  <video id="arrival-video" src="resources/Data.webm" muted></video>
+</div>
+
 <div id="arrival">
   <div class="loading">LOADING...</div>
 </div>
@@ -80,17 +101,28 @@ let currentUsername = '';
 let fadeTimeout = null;
 const apiUrl = 'https://www.audeobox.com/api/feeds/newest-users.xml';
 
+function playVideo() {
+  const video = document.getElementById('arrival-video');
+  video.currentTime = 0;
+  video.play();
+}
+
 function showArrival(username) {
   const container = document.getElementById("arrival");
+  const videoOverlay = document.getElementById("video-overlay");
   container.innerHTML = `
     <div class="joined">${username} just joined</div>
     <div class="welcome">WELCOME TO AUDEOBOX</div>
   `;
   container.style.opacity = '1';
+  videoOverlay.style.opacity = '1';
+  
+  playVideo();
   
   if (fadeTimeout) clearTimeout(fadeTimeout);
   fadeTimeout = setTimeout(() => {
     container.style.opacity = '0';
+    videoOverlay.style.opacity = '0';
   }, 5000);
 }
 
