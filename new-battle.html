@@ -18,19 +18,61 @@ html, body {
   color: white;
 }
 
+#video-overlay {
+  position: fixed;
+  bottom: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+#video-overlay video {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
 #battle {
   position: absolute;
-  top: 50%;
+  bottom: 10vh;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   padding: 28px 48px;
   background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
   border: 2px solid #d4af37;
   border-radius: 24px;
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
   text-align: center;
-  opacity: 1;
-  transition: opacity 1s ease;
+  opacity: 0;
+  z-index: 1000;
+}
+
+#battle.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#battle.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+#video-overlay.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#video-overlay.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 #battle::before {
@@ -50,6 +92,23 @@ html, body {
   color: #d4af37;
   text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
   margin-bottom: 8px;
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+.battle-title.slide-in {
+  animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .subtitle {
@@ -58,6 +117,22 @@ html, body {
   text-transform: uppercase;
   color: #e8e8e8;
   opacity: 0.8;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.subtitle span {
+  display: inline-block;
+  opacity: 0;
+}
+
+.subtitle.typing span {
+  animation: typeIn 0.05s ease forwards;
+}
+
+@keyframes typeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .loading {
@@ -71,6 +146,10 @@ html, body {
 
 <body>
 
+<div id="video-overlay">
+  <video id="battle-video" src="resources/Data.webm" muted></video>
+</div>
+
 <div id="battle">
   <div class="loading">LOADING...</div>
 </div>
@@ -78,20 +157,67 @@ html, body {
 <script>
 let currentBattle = '';
 let fadeTimeout = null;
+let typingTimeout = null;
 const apiUrl = 'https://www.audeobox.com/api/feeds/newest-battles.xml';
+
+function playVideo() {
+  const video = document.getElementById('battle-video');
+  video.currentTime = 0;
+  video.play();
+}
+
+function typeWriter(element, text, callback) {
+  if (typingTimeout) clearTimeout(typingTimeout);
+  element.innerHTML = '';
+  let i = 0;
+  
+  function type() {
+    if (i < text.length) {
+      const char = text[i] === ' ' ? '&nbsp;' : text[i];
+      element.innerHTML += '<span>' + char + '</span>';
+      i++;
+      typingTimeout = setTimeout(type, 30);
+    } else if (callback) {
+      callback();
+    }
+  }
+  type();
+}
 
 function showBattle(battleName) {
   const container = document.getElementById("battle");
+  const videoOverlay = document.getElementById("video-overlay");
   var username = battleName.split(' vs ')[0];
+  
+  container.classList.remove('fade-out');
+  videoOverlay.classList.remove('fade-out');
+  container.classList.add('show');
+  videoOverlay.classList.add('show');
+  
   container.innerHTML = `
     <div class="battle-title">${username}</div>
-    <div class="subtitle">JUST DROPPED A NEW BATTLE</div>
+    <div class="subtitle"><span></span></div>
   `;
-  container.style.opacity = '1';
+  
+  playVideo();
+  
+  setTimeout(() => {
+    const titleEl = container.querySelector('.battle-title');
+    titleEl.classList.add('slide-in');
+    
+    setTimeout(() => {
+      const subtitleEl = container.querySelector('.subtitle');
+      subtitleEl.classList.add('typing');
+      typeWriter(subtitleEl, 'JUST DROPPED A NEW BATTLE');
+    }, 200);
+  }, 300);
   
   if (fadeTimeout) clearTimeout(fadeTimeout);
   fadeTimeout = setTimeout(() => {
-    container.style.opacity = '0';
+    container.classList.add('fade-out');
+    container.classList.remove('show');
+    videoOverlay.classList.add('fade-out');
+    videoOverlay.classList.remove('show');
   }, 5000);
 }
 
