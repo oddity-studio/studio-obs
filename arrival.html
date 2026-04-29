@@ -245,7 +245,7 @@ async function checkForNewUser() {
     }
   } catch (e) {}
   
-  setTimeout(checkForNewUser, 5000);
+  setTimeout(checkForNewUser, 60000);
 }
 
 async function loadNewestUser() {
@@ -265,7 +265,7 @@ async function loadNewestUser() {
         currentUsername = username;
         
         showArrival(username);
-        setTimeout(checkForNewUser, 5000);
+        setTimeout(checkForNewUser, 60000);
         return;
       }
     }
@@ -273,7 +273,7 @@ async function loadNewestUser() {
   
   currentUsername = fallback;
   showArrival(fallback);
-  setTimeout(checkForNewUser, 5000);
+  setTimeout(checkForNewUser, 60000);
 }
 
 const fallback = "New Producer";

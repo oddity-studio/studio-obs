@@ -245,7 +245,7 @@ async function checkForNewBattle() {
     }
   } catch (e) {}
   
-  setTimeout(checkForNewBattle, 5000);
+  setTimeout(checkForNewBattle, 60000);
 }
 
 async function loadNewestBattle() {
@@ -264,7 +264,7 @@ async function loadNewestBattle() {
         currentBattle = title;
         
         showBattle(title);
-        setTimeout(checkForNewBattle, 5000);
+        setTimeout(checkForNewBattle, 60000);
         return;
       }
     }
@@ -272,7 +272,7 @@ async function loadNewestBattle() {
   
   currentBattle = fallback;
   showBattle(fallback);
-  setTimeout(checkForNewBattle, 5000);
+  setTimeout(checkForNewBattle, 60000);
 }
 
 const fallback = "Producer vs User #0";
