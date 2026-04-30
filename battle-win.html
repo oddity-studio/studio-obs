@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Battle Win - OBS Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital 1,wght@1,900&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Exo 2', sans-serif;
+  color: white;
+}
+
+#video-overlay {
+  position: fixed;
+  bottom: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+#video-overlay video {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+#battle-win {
+  position: absolute;
+  bottom: 10vh;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 28px 48px;
+  min-width: 500px;
+  background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+  border: 2px solid #d4af37;
+  border-radius: 24px;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  opacity: 0;
+  z-index: 1000;
+}
+
+#battle-win.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#battle-win.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+#video-overlay.show {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+#video-overlay.fade-out {
+  animation: fadeOut 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+#battle-win::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+}
+
+.battle-vs {
+  font-size: 20px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #e8e8e8;
+  opacity: 0;
+}
+
+.battle-vs.slide-in {
+  animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to { 
+    opacity: 0.8;
+    transform: translateX(0);
+  }
+}
+
+.congrats {
+  font-size: 48px;
+  font-style: italic;
+  font-weight: 900;
+  color: #d4af37;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+.congrats.slide-in {
+  animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.loading {
+  font-size: 32px;
+  color: #d4af37;
+  font-style: italic;
+  font-weight: 900;
+}
+</style>
+</head>
+
+<body>
+
+<div id="video-overlay">
+  <video id="battle-win-video" src="resources/Data.webm" muted></video>
+</div>
+
+<div id="battle-win">
+  <div class="loading">LOADING...</div>
+</div>
+
+<script>
+let currentBattle = '';
+let fadeTimeout = null;
+const apiUrl = 'https://www.audeobox.com/api/feeds/recent-wins.xml';
+
+function playVideo() {
+  const video = document.getElementById('battle-win-video');
+  video.currentTime = 0;
+  video.play();
+}
+
+function showBattleWin(winner, loser, battleKey) {
+  const container = document.getElementById("battle-win");
+  const videoOverlay = document.getElementById("video-overlay");
+  
+  container.classList.remove('fade-out');
+  videoOverlay.classList.remove('fade-out');
+  container.classList.add('show');
+  videoOverlay.classList.add('show');
+  
+  container.innerHTML = `
+    <div class="battle-vs">${winner} vs ${loser} just finished</div>
+    <div class="congrats">CONGRATULATIONS ${winner}</div>
+  `;
+  
+  playVideo();
+  
+  setTimeout(() => {
+    const vsEl = container.querySelector('.battle-vs');
+    vsEl.classList.add('slide-in');
+    
+    setTimeout(() => {
+      const congratsEl = container.querySelector('.congrats');
+      congratsEl.classList.add('slide-in');
+    }, 200);
+  }, 300);
+  
+  if (fadeTimeout) clearTimeout(fadeTimeout);
+  fadeTimeout = setTimeout(() => {
+    container.classList.add('fade-out');
+    container.classList.remove('show');
+    videoOverlay.classList.add('fade-out');
+    videoOverlay.classList.remove('show');
+  }, 5000);
+}
+
+async function checkForNewWin() {
+  console.log('Checking for new battle win...');
+  try {
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
+    const text = await corsResponse.text();
+    
+    if (text) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.getElementsByTagName('item');
+      
+      if (items.length > 0) {
+        var title = items[0].querySelector('title').textContent;
+        
+        if (title !== currentBattle) {
+          console.log('New battle win detected:', title, '- triggering re-render');
+          currentBattle = title;
+          
+          var parts = title.split(' beat ');
+          var winner = parts[0].trim().toUpperCase();
+          var loser = parts[1].trim().toUpperCase();
+          
+          showBattleWin(winner, loser, title);
+        }
+      }
+    }
+  } catch (e) {}
+  
+  setTimeout(checkForNewWin, 60000);
+}
+
+async function loadBattleWin() {
+  console.log('Initial load: checking for recent battle win...');
+  try {
+    const corsResponse = await fetch('https://corsproxy.io/?' + apiUrl);
+    const text = await corsResponse.text();
+    
+    if (text) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.getElementsByTagName('item');
+      
+      if (items.length > 0) {
+        var title = items[0].querySelector('title').textContent;
+        currentBattle = title;
+        
+        var parts = title.split(' beat ');
+        var winner = parts[0].trim().toUpperCase();
+        var loser = parts[1].trim().toUpperCase();
+        
+        showBattleWin(winner, loser, title);
+        setTimeout(checkForNewWin, 60000);
+        return;
+      }
+    }
+  } catch (e) {}
+  
+  currentBattle = fallback;
+  var parts = fallback.split(' beat ');
+  showBattleWin(parts[0].toUpperCase(), parts[1].toUpperCase(), fallback);
+  setTimeout(checkForNewWin, 60000);
+}
+
+const fallback = "Sullymon beat IxAmxAlias";
+
+loadBattleWin();
+</script>
+
+</body>
+</html>
