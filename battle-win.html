@@ -30,8 +30,9 @@ html, body {
 }
 
 #video-overlay video {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 72vw;
+  max-height: 72vh;
+  margin-left: -100px;
 }
 
 #battle-win {
@@ -176,7 +177,7 @@ function showBattleWin(winner, loser, battleKey) {
   
   container.innerHTML = `
     <div class="battle-vs">${winner} vs ${loser} battle just finished</div>
-    <div class="congrats">CONGRATULATIONS ${winner}</div>
+    <div class="congrats">Congrats ${winner}</div>
   `;
   
   playVideo();
